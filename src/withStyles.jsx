@@ -10,7 +10,6 @@ import ThemedStyleSheet from './ThemedStyleSheet';
 
 // Add some named exports for convenience.
 export const css = ThemedStyleSheet.resolve;
-export const cssNoRTL = ThemedStyleSheet.resolveNoRTL;
 export const withStylesPropTypes = {
   styles: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   theme: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
@@ -40,6 +39,7 @@ export function withStyles(
   {
     stylesPropName = 'styles',
     themePropName = 'theme',
+    cssPropName = 'css',
     flushBefore = false,
     pureComponent = false,
   } = {},
@@ -56,9 +56,21 @@ export function withStyles(
         this.maybeCreateStyles();
       }
 
+      getDirection() {
+        return this.context[CHANNEL] && this.context[CHANNEL].getState();
+      }
+
+      getResolveMethod() {
+        const isRTL = this.getDirection() === DIRECTIONS.RTL;
+        if (isRTL) {
+          return ThemedStyleSheet.resolveRTL;
+        }
+
+        return ThemedStyleSheet.resolveLTR;
+      }
+
       maybeCreateStyles() {
-        const direction = this.context[CHANNEL] && this.context[CHANNEL].getState();
-        const isRTL = direction === DIRECTIONS.RTL;
+        const isRTL = this.getDirection() === DIRECTIONS.RTL;
         if (isRTL && !styleDefRTL) {
           styleDefRTL = styleFn ? ThemedStyleSheet.createRTL(styleFn) : EMPTY_STYLES_FN;
         } else if (!isRTL && !styleDefLTR) {
@@ -88,6 +100,7 @@ export function withStyles(
             {...{
               [themePropName]: ThemedStyleSheet.get(),
               [stylesPropName]: styleDef(),
+              [cssPropName]: this.getResolveMethod(),
             }}
           />
         );
@@ -105,6 +118,7 @@ export function withStyles(
       WithStyles.propTypes = deepmerge({}, WrappedComponent.propTypes);
       delete WithStyles.propTypes[stylesPropName];
       delete WithStyles.propTypes[themePropName];
+      delete WithStyles.propTypes[cssPropName];
     }
     if (WrappedComponent.defaultProps) {
       WithStyles.defaultProps = deepmerge({}, WrappedComponent.defaultProps);

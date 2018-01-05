@@ -32,9 +32,17 @@ function resolve(...styles) {
   return styleInterface.resolve(styles);
 }
 
-function resolveNoRTL(...styles) {
-  if (styleInterface.resolveNoRTL) {
-    return styleInterface.resolveNoRTL(styles);
+function resolveLTR(...styles) {
+  if (styleInterface.resolveLTR) {
+    return styleInterface.resolveLTR(styles);
+  }
+
+  return resolve(styles);
+}
+
+function resolveRTL(...styles) {
+  if (styleInterface.resolveRTL) {
+    return styleInterface.resolveRTL(styles);
   }
 
   return resolve(styles);
@@ -57,8 +65,9 @@ export default globalCache.setIfMissingThenGet(
     create: createLTR,
     createRTL,
     get,
-    resolveNoRTL,
     resolve,
+    resolveLTR,
+    resolveRTL,
     flush,
   }),
 );
